@@ -147,4 +147,3 @@ STATICFILES_DIRS = [
 
 STATIC_ROOT = '/vol/web/static'
 MEDIA_ROOT = '/vol/web/media'
-
