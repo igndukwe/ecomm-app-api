@@ -6,10 +6,26 @@ import json
 
 # Create your views here.
 def store(request):
+
+    # calculates total items ordered in the cart icon
+    if request.user.is_authenticated:
+        customer = request.user.customer
+        order, created = Order.objects.get_or_create(
+            customer=customer,
+            complete=False
+        )
+        items = order.orderitem_set.all()
+        cartItems = order.get_cart_items
+    else:
+        # if user is not authenticated return an empty list
+        items = []
+        order = {'get_cart_total': 0, 'get_cart_items': 0}
+        cartItems = order['get_cart_items']
+
     # query products
     products = Product.objects.all()
     # print(products)
-    context = {'products': products}
+    context = {'items': items, 'products': products, 'cartItems': cartItems}
     return render(
         request,
         'store/store.html',
@@ -36,12 +52,14 @@ def cart(request):
         # e.g. OrderIdems is a child of Order
         # Hence, to get all the order items that has an order
         items = order.orderitem_set.all()
+        cartItems = order.get_cart_items
     else:
         # if user is not authenticated return an empty list
         items = []
         order = {'get_cart_total': 0, 'get_cart_items': 0}
+        cartItems = order['get_cart_items']
 
-    context = {'items': items, 'order': order}
+    context = {'items': items, 'order': order, 'cartItems': cartItems}
 
     return render(
         request,
@@ -58,13 +76,14 @@ def checkout(request):
             complete=False
         )
         items = order.orderitem_set.all()
+        cartItems = order.get_cart_items
     else:
         items = []
         order = {'get_cart_total': 0, 'get_cart_items': 0}
+        cartItems = order['get_cart_items']
 
-    context = {'items': items, 'order': order}
+    context = {'items': items, 'order': order, 'cartItems': cartItems}
 
-    context = {'items': items, 'order': order}
     return render(
         request,
         'store/checkout.html',

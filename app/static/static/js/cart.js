@@ -1,15 +1,22 @@
 // Add event handler for each "Add to Cart" button
 //////////////////////////////////////////////////
-// get all buttons
+// get all the elements with class 'update-cart'
+// e.g.1. get all buttons from the store.html with class 'update-cart'
+// e.g.2. get the icon from the cart.html with class 'update-cart'
 var updateBtns = document.getElementsByClassName('update-cart')
 
+//iterate through all the items
 for (i = 0; i < updateBtns.length; i++) {
-    // add event listener on click for each button
+    // add event listener on click for each and
     // set a function to execute on each click
     updateBtns[i].addEventListener('click', function () {
-        // display product=product.id and action=add
+        // this is how to invoke our custom  data-product and data-action 
+        // parameters we added in the cart.html
+        // custom parameters are appended with data-xxx
+        // and invoked with dataset.xxx
         var productId = this.dataset.product
         var action = this.dataset.action
+        // display data-product=product.id and data-action=add
         console.log('productId:', productId, 'Action:', action)
 
         // check if user is authenticated
@@ -43,5 +50,7 @@ function updateUserOrder(productId, action) {
         // console that response data out
         // this is what our view is sending out to the template
         console.log('Data:', data)
+        // reload page so that we can see the changes mage
+        location.reload()
     });
 }
