@@ -8,4 +8,6 @@ urlpatterns = [
     path('cart/', views.cart, name="cart"),
     # http:/localhost/checkout/
     path('checkout/', views.checkout, name="checkout"),
+    # http:/localhost/checkout/
+    path('update_item/', views.updateItem, name="update_item"),
 ]
