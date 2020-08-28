@@ -96,10 +96,10 @@ def updateItem(request):
         complete=False
     )
 
-    # The reason why we use get_or_create 
-    # is that want to change the value 
+    # The reason why we use get_or_create
+    # is that want to change the value
     # of the OrderItem if it already exists
-    # e.g. if OrderItem already exists 
+    # e.g. if OrderItem already exists
     # according to the Product and Order
     # we do not want to create a new one
     # we simply want to change the quantity
@@ -109,7 +109,7 @@ def updateItem(request):
         product=product
     )
 
-    # check if action is add 
+    # check if action is add
     # then perform an addition
     # otherwise perform a subtraction
     if action == 'add':
