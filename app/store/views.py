@@ -73,29 +73,51 @@ def checkout(request):
 
 
 def updateItem(request):
+
+    # get the body from cart.js
+    # which is a JSON data
     data = json.loads(request.body)
     productId = data['productId']
     action = data['action']
     print('Action:', action)
     print('Product:', productId)
 
+    # get the logged in customer
     customer = request.user.customer
+
+    # get the product from database by id
+    # the id number comes from the cart.js
     product = Product.objects.get(id=productId)
+
+    # get the orders attached to that customer
+    # that has a complete value of false
     order, created = Order.objects.get_or_create(
         customer=customer,
         complete=False
     )
 
+    # The reason why we use get_or_create 
+    # is that want to change the value 
+    # of the OrderItem if it already exists
+    # e.g. if OrderItem already exists 
+    # according to the Product and Order
+    # we do not want to create a new one
+    # we simply want to change the quantity
+    # > by adding or subtracting quantities
     orderItem, created = OrderItem.objects.get_or_create(
         order=order,
         product=product
     )
 
+    # check if action is add 
+    # then perform an addition
+    # otherwise perform a subtraction
     if action == 'add':
         orderItem.quantity = (orderItem.quantity + 1)
     elif action == 'remove':
         orderItem.quantity = (orderItem.quantity - 1)
 
+    # save in the database
     orderItem.save()
 
     if orderItem.quantity <= 0:

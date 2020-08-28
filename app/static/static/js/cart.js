@@ -36,11 +36,12 @@ function updateUserOrder(productId, action) {
             'X-CSRFToken': csrftoken,
         },
         body: JSON.stringify({ 'productId': productId, 'action': action })
-    })
-        .then((response) => {// acknowledgement in json value
-            return response.json();
-        })
-        .then((data) => { // console that data out
-            console.log('Data:', data)
-        });
+    }).then((response) => {
+        // acknowledgement in json value
+        return response.json();
+    }).then((data) => {
+        // console that response data out
+        // this is what our view is sending out to the template
+        console.log('Data:', data)
+    });
 }
