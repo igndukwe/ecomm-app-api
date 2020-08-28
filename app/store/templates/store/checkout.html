@@ -72,4 +72,29 @@
         </div>
     </div>
 </div>
+
+<script type="text/javascript">
+    var shipping = '{{order.shipping}}'
+
+    if (shipping == 'False') {
+        // set the shipping address form to empty
+        document.getElementById('shipping-info').innerHTML = ''
+    }
+
+    // get element by id form
+    var form = document.getElementById('form')
+
+    // on submit, trigger an event
+    form.addEventListener('submit', function (e) {
+        // stope the form from performing its normal action
+        // and we will handle it
+        e.preventDefault()
+        console.log('Form Submitted...')
+        // hide the form button
+        document.getElementById('form-button').classList.add("hidden");
+        // unhide the payment option button
+        document.getElementById('payment-info').classList.remove("hidden");
+    })
+
+</script>
 {% endblock content %}
