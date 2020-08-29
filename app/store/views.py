@@ -1,7 +1,9 @@
 from django.shortcuts import render
-from .models import Product, Order, OrderItem
+from .models import Product, Order, OrderItem, ShippingAddress
 from django.http import JsonResponse
+# from django.views.decorators.csrf import csrf_exempt
 import json
+import datetime
 
 
 # Create your views here.
@@ -68,6 +70,7 @@ def cart(request):
     )
 
 
+# @csrf_exempt
 def checkout(request):
     if request.user.is_authenticated:
         customer = request.user.customer
@@ -143,3 +146,55 @@ def updateItem(request):
         orderItem.delete()
 
     return JsonResponse('Item was added', safe=False)
+
+
+def processOrder(request):
+    # timestamp
+    transaction_id = datetime.datetime.now().timestamp()
+
+    # request body comes from the js in the checkout.htm
+    data = json.loads(request.body)
+
+    # check if user is loged in
+    if request.user.is_authenticated:
+
+        # get the user customer from the request
+        customer = request.user.customer
+
+    # get the order of this customer with txn not completed
+        order, created = Order.objects.get_or_create(
+            customer=customer, complete=False)
+
+    # 'form' is derived from the
+    # body: JSON.stringify({ 'form': userFormData, ...})
+    # javaScript code in the checkout.html
+    # and 'total' is a value of the 'form' fied
+        total = float(data['form']['total'])
+
+    # time the transaction was made
+        order.transaction_id = transaction_id
+
+    # set txn to complete
+        if total == order.get_cart_total:
+            order.complete = True
+
+    # save order in the database
+        order.save()
+
+    # if customer needs shipping
+        if order.shipping is True:
+            ShippingAddress.objects.create(
+                customer=customer,
+                order=order,
+                # these values are derived from the
+                # body: JSON.stringify({ ..., 'shipping': shippingInfo})
+                # javaScript code in the checkout.html
+                address=data['shipping']['address'],
+                city=data['shipping']['city'],
+                state=data['shipping']['state'],
+                zipcode=data['shipping']['zipcode'],
+            )
+    else:
+        print('User is not logged in')
+
+    return JsonResponse('Payment submitted..', safe=False)
