@@ -5,7 +5,6 @@
     <div class="col-lg-6">
         <div class="box-element" id="form-wrapper">
             <form id="form">
-                {% csrf_token %}
                 <div id="user-info">
                     <div class="form-field">
                         <input required class="form-control" type="text" name="name" placeholder="Name..">
@@ -76,12 +75,16 @@
 </div>
 
 <script type="text/javascript">
+
+    // get order context value from view.py
     var shipping = '{{order.shipping}}'
-    var total = '{{order.get_cart_total}}'
+
+    // get total context value from view.py
+    var total = '{{order.get_cart_total|floatformat:2}}'
 
     // if user does not require shipping
     if (shipping == 'False') {
-        // set the shipping address form to empty
+        // set the shipping-info with shipping address form to empty
         document.getElementById('shipping-info').innerHTML = ''
     }
 
@@ -93,25 +96,21 @@
 
     // if user is logged in and wants to buy an item that does not require shipping
     if (shipping == 'False' && user != 'AnonymousUser') {
-        // Hide entire form 
+        //Hide entire form
         document.getElementById('form-wrapper').classList.add("hidden");
-        // Show payment
+        //Show payment 
         document.getElementById('payment-info').classList.remove("hidden");
     }
 
-    // get element by id form
+    // get form element by id
     var form = document.getElementById('form')
-
-    // gwt first input value
-    // reset the csrf token that is going to get resubmited with our POST data
-    csrftoken = form.getElementsByTagName("input")[0].value
-    console.log('Newtoken:', form.getElementsByTagName("input")[0].value)
 
     // on submit, trigger an event
     form.addEventListener('submit', function (e) {
         // stope the form from performing its normal action
         // and we will handle it
         e.preventDefault()
+        // output text from console
         console.log('Form Submitted...')
         // hide the form button
         document.getElementById('form-button').classList.add("hidden");
@@ -119,8 +118,9 @@
         document.getElementById('payment-info').classList.remove("hidden");
     })
 
-    // add event handler to the payment options
+    // add event handler to the payment options to listen on a click event
     document.getElementById('make-payment').addEventListener('click', function (e) {
+        // call the submit function
         submitFormData()
     })
 
@@ -158,10 +158,9 @@
         console.log('Shipping Info:', shippingInfo)
         console.log('User Info:', userFormData)
 
-        var url = "/process_order/"
-
         // pass url, POST, headers and body
         // stringify the json body and send it to backend
+        var url = "/process_order/"
         fetch(url, {
             method: 'POST',
             headers: {
@@ -171,10 +170,17 @@
             body: JSON.stringify({ 'form': userFormData, 'shipping': shippingInfo }),
 
         })
-            .then((response) => response.json())// return response
+            .then((response) => response.json())// return response 
             .then((data) => {// acknowledgement that request is successful
                 console.log('Success:', data);
                 alert('Transaction completed');
+
+                // reset cokies to empty dic in root domain
+                // regardles of wheather user is logged in or not
+                cart = {}
+
+                document.cookie = 'cart=' + JSON.stringify(cart) + ";domain=;path=/"
+
                 window.location.href = "{% url 'store' %}"
 
             })
