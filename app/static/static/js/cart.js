@@ -16,14 +16,16 @@ for (i = 0; i < updateBtns.length; i++) {
         // and invoked with dataset.xxx
         var productId = this.dataset.product
         var action = this.dataset.action
+
         // display data-product=product.id and data-action=add
         console.log('productId:', productId, 'Action:', action)
 
-        // check if user is authenticated
+        // output user in the console
         console.log('USER:', user)
-        if (user == 'AnonymousUser') {
-            console.log('User is not authenticated')
 
+        // check if user is authenticated
+        if (user == 'AnonymousUser') {
+            addCookieItem(productId, action)
         } else {
             updateUserOrder(productId, action)
         }
@@ -43,14 +45,48 @@ function updateUserOrder(productId, action) {
             'X-CSRFToken': csrftoken,
         },
         body: JSON.stringify({ 'productId': productId, 'action': action })
-    }).then((response) => {
-        // acknowledgement in json value
-        return response.json();
-    }).then((data) => {
-        // console that response data out
-        // this is what our view is sending out to the template
-        console.log('Data:', data)
-        // reload page so that we can see the changes mage
-        location.reload()
-    });
+    })
+        .then((response) => {
+            return response.json();// get response
+        })
+        .then((data) => {
+            location.reload() // hot reload to refresh page
+        });
+
+}
+
+function addCookieItem(productId, action) {
+
+    // output this in the console
+    console.log('User is not authenticated')
+
+    if (action == 'add') {
+        // cart is in our main.html header
+        // if productId does not exist in the cart, set it to 1
+        if (cart[productId] == undefined) {
+            cart[productId] = { 'quantity': 1 }
+
+        } else {
+            // add to the current item if it exists
+            cart[productId]['quantity'] += 1
+        }
+    }
+
+    if (action == 'remove') {
+        // product must exist for it to be removed
+        cart[productId]['quantity'] -= 1
+
+        // if item is zero, delete the item from cart
+        if (cart[productId]['quantity'] <= 0) {
+            console.log('Item should be deleted')
+            delete cart[productId];
+        }
+    }
+    // output in the console
+    console.log('Cart:', cart)
+
+    // reset the cookie to this value 
+    document.cookie = 'cart=' + JSON.stringify(cart) + ";domain=;path=/"
+
+    location.reload() // hot reload to refresh
 }
