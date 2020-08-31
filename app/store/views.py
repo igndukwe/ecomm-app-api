@@ -1,11 +1,17 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
+from django.urls import reverse
 from .models import Product, Order, OrderItem, ShippingAddress
 from django.http import JsonResponse
-# from django.views.decorators.csrf import csrf_exempt
+from django.conf import settings
+from .utils import cartData, guestOrder
+from django.views.decorators.http import require_http_methods
+
 import json
 import datetime
-# from .utils import cookieCart, cartData, guestOrder
-from .utils import cartData, guestOrder
+import stripe
+
+
+stripe.api_key = settings.STRIPE_PRIVATE_KEY
 
 
 def store(request):
@@ -33,6 +39,7 @@ def cart(request):
     return render(request, 'store/cart.html', context)
 
 
+# @ csrf_exempt
 def checkout(request):
 
     # handle the logic for loged in and unauthenticated users
@@ -74,13 +81,19 @@ def updateItem(request):
     return JsonResponse('Item was added', safe=False)
 
 
-def processOrder(request):
+@require_http_methods(["POST", ])
+def charge(request):
 
     # timestamp
     transaction_id = datetime.datetime.now().timestamp()
 
     # request body comes from the js in the checkout.htm
-    data = json.loads(request.body)
+    data = {
+        'name': request.POST['name'],
+        'email': request.POST['email'],
+    }
+
+    customer = None
 
     # check if user is loged in
     if request.user.is_authenticated:
@@ -103,7 +116,8 @@ def processOrder(request):
     # body: JSON.stringify({ 'form': userFormData, ...})
     # javaScript code in the checkout.html
     # and 'total' is a value of the 'form' fied
-    total = float(data['form']['total'])
+    # total = int(float(request.POST['total']))
+    total = int(float(request.POST['total']))
 
     # time the transaction was made
     order.transaction_id = transaction_id
@@ -123,10 +137,42 @@ def processOrder(request):
             # these values are derived from the
             # body: JSON.stringify({ ..., 'shipping': shippingInfo})
             # javaScript code in the checkout.html
-            address=data['shipping']['address'],
-            city=data['shipping']['city'],
-            state=data['shipping']['state'],
-            zipcode=data['shipping']['zipcode'],
+            address=request.POST['address'],
+            city=request.POST['city'],
+            state=request.POST['state'],
+            zipcode=request.POST['zipcode'],
+            country=request.POST['country'],
         )
 
-    return JsonResponse('Payment submitted..', safe=False)
+    # create Stripe Customer
+    customer = stripe.Customer.create(
+        email=customer.email,
+        name=customer.name,
+        source=request.POST['stripeToken']
+    )
+
+    # charge Stripe Customer
+    # charge = stripe.Charge(
+    # amount=total*100,
+    stripe.Charge.create(
+        customer=customer,
+        amount=total*100,
+        currency='nzd',
+        description='Payment...'
+    )
+
+    # set cookie
+    # response = render(request, 'store/checkout.html')
+    response = redirect(reverse('store'))
+    response.delete_cookie('cart')
+    # response.set_cookie('cart', request.COOKIES)
+    # response.set_cookie(
+    #    key=cookie.name,
+    #    value=cookie.value,
+    #    domain=cookie.domain,
+    #    path=cookie.path,
+    #    expires=cookie.expires
+    # )
+
+    return response
+    # return redirect(reverse('store'), response)

@@ -12,6 +12,8 @@
 
     <link rel="stylesheet" type="text/css" href="{% static 'css/main.css' %}">
 
+    <script src="https://js.stripe.com/v3/"></script>
+
     <script type="text/javascript">
         var user = '{{request.user}}'
 
@@ -61,7 +63,7 @@
             // set cart to the root of the domain i.e. /
             document.cookie = 'cart=' + JSON.stringify(cart) + ";domain=;path=/"
         }
-        console.log('Cart:', cart)
+        console.log('cart:', cart)
 
     </script>
 

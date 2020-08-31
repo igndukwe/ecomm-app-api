@@ -4,7 +4,8 @@
 <div class="row">
     <div class="col-lg-6">
         <div class="box-element" id="form-wrapper">
-            <form id="form">
+            <form id="infoform">
+                {% csrf_token %}
                 <div id="user-info">
                     <div class="form-field">
                         <input required class="form-control" type="text" name="name" placeholder="Name..">
@@ -31,7 +32,7 @@
                         <input class="form-control" type="text" name="zipcode" placeholder="Zip code..">
                     </div>
                     <div class="form-field">
-                        <input class="form-control" type="text" name="country" placeholder="Zip code..">
+                        <input class="form-control" type="text" name="country" placeholder="Country..">
                     </div>
                 </div>
 
@@ -39,13 +40,6 @@
                 <input id="form-button" class="btn btn-success btn-block" type="submit" value="Continue">
             </form>
         </div>
-
-        <br>
-        <div class="box-element hidden" id="payment-info">
-            <small>Paypal Options</small>
-            <button id="make-payment">Make payment</button>
-        </div>
-
     </div>
 
     <div class="col-lg-6">
@@ -71,11 +65,36 @@
             <h5>Items: {{order.get_cart_items}}</h5>
             <h5>Total: ${{order.get_cart_total|floatformat:2}}</h5>
         </div>
+
+        <br>
+        <div class="box-element hidden" id="payment-info">
+            <!--<small>Paypal Options</small>-->
+            <!--<button id="make-payment">Make payment</button>-->
+            <form action="{% url 'charge' %}" method="post" id="payment-form">
+                {% csrf_token %}
+                <div class="form-row form-field-payment">
+                    <label for="card-element">
+                        Credit or debit card
+                    </label>
+                    <div id="card-element">
+                        <!-- A Stripe Element will be inserted here. -->
+                    </div>
+
+                    <!-- Used to display form errors. -->
+                    <div id="card-errors" role="alert"></div>
+                </div>
+
+                <button class="btn btn-block btn-lg btn-outline-dark">Submit Payment</button>
+            </form>
+        </div>
     </div>
 </div>
 
+
 <script type="text/javascript">
 
+
+    /////////////Anyi Begin //////////////
     // get order context value from view.py
     var shipping = '{{order.shipping}}'
 
@@ -103,10 +122,10 @@
     }
 
     // get form element by id
-    var form = document.getElementById('form')
+    var infoform = document.getElementById('infoform')
 
     // on submit, trigger an event
-    form.addEventListener('submit', function (e) {
+    infoform.addEventListener('submit', function (e) {
         // stope the form from performing its normal action
         // and we will handle it
         e.preventDefault()
@@ -118,72 +137,155 @@
         document.getElementById('payment-info').classList.remove("hidden");
     })
 
-    // add event handler to the payment options to listen on a click event
-    document.getElementById('make-payment').addEventListener('click', function (e) {
-        // call the submit function
-        submitFormData()
-    })
+    /////////////Anyi end//////////////
 
-    function submitFormData() {
-        console.log('Payment button clicked')
 
-        var userFormData = {
-            'name': null,
-            'email': null,
-            'total': total,
+    // Create a Stripe client.
+    var stripe = Stripe('pk_test_51HLOu5I2e8LumXFjvDndcwXS2PDlOPDZswcOI0amkpWjvcePElV2XfgkRCiqWapICu7DSOAC7PJiEGa9x9if66dq00s8P81bYU');
+
+    // Create an instance of Elements.
+    var elements = stripe.elements();
+
+    // Custom styling can be passed to options when creating an Element.
+    // (Note that this demo uses a wider set of styles than the guide below.)
+    var style = {
+        base: {
+            color: '#32325d',
+            fontFamily: '"Helvetica Neue", Helvetica, sans-serif',
+            fontSmoothing: 'antialiased',
+            fontSize: '16px',
+            '::placeholder': {
+                color: '#aab7c4'
+            }
+        },
+        invalid: {
+            color: '#fa755a',
+            iconColor: '#fa755a'
         }
+    };
 
-        var shippingInfo = {
-            'address': null,
-            'city': null,
-            'state': null,
-            'zipcode': null,
+    // Create an instance of the card Element.
+    var card = elements.create('card', { style: style });
+
+    // Add an instance of the card Element into the `card-element` <div>.
+    card.mount('#card-element');
+    // Handle real-time validation errors from the card Element.
+    card.on('change', function (event) {
+        var displayError = document.getElementById('card-errors');
+        if (event.error) {
+            displayError.textContent = event.error.message;
+        } else {
+            displayError.textContent = '';
         }
+    });
+
+    // Handle form submission.
+    var form = document.getElementById('payment-form');
+    form.addEventListener('submit', function (event) {
+        event.preventDefault();
+
+        stripe.createToken(card).then(function (result) {
+            if (result.error) {
+                // Inform the user if there was an error.
+                var errorElement = document.getElementById('card-errors');
+                errorElement.textContent = result.error.message;
+            } else {
+                // Send the token to your server.
+                stripeTokenHandler(result.token);
+            }
+        });
+    });
+
+    // Submit the form with the token ID.
+    function stripeTokenHandler(token) {
+        // Insert the token ID into the form so it gets submitted to the server
+        var form = document.getElementById('payment-form');
+        var hiddenInput = document.createElement('input');
+        hiddenInput.setAttribute('type', 'hidden');
+        hiddenInput.setAttribute('name', 'stripeToken');
+        hiddenInput.setAttribute('value', token.id);
+        form.appendChild(hiddenInput);
+
+        /////////////Anyi Begin //////////////
+
+        //userFormData
+        var hiddenNameInput = document.createElement('input');
+        hiddenNameInput.setAttribute('type', 'hidden');
+        hiddenNameInput.setAttribute('id', 'form_name_id');
+        hiddenNameInput.setAttribute('name', 'name');
+        hiddenNameInput.setAttribute('value', '');
+        form.appendChild(hiddenNameInput);
+
+        var hiddenTotalInput = document.createElement('input');
+        hiddenTotalInput.setAttribute('type', 'hidden');
+        hiddenTotalInput.setAttribute('id', 'form_total_id');
+        hiddenTotalInput.setAttribute('name', 'total');
+        hiddenTotalInput.setAttribute('value', total);
+        form.appendChild(hiddenTotalInput);
+
+        var hiddenEmailInput = document.createElement('input');
+        hiddenEmailInput.setAttribute('type', 'hidden');
+        hiddenEmailInput.setAttribute('id', 'form_email_id');
+        hiddenEmailInput.setAttribute('name', 'email');
+        hiddenEmailInput.setAttribute('value', '');
+        form.appendChild(hiddenEmailInput);
+
+        //shippingInfo
+        var hiddenAddressInput = document.createElement('input');
+        hiddenAddressInput.setAttribute('type', 'hidden');
+        hiddenAddressInput.setAttribute('id', 'form_address_id');
+        hiddenAddressInput.setAttribute('name', 'address');
+        hiddenAddressInput.setAttribute('value', '');
+        form.appendChild(hiddenAddressInput);
+
+        var hiddenCityInput = document.createElement('input');
+        hiddenCityInput.setAttribute('type', 'hidden');
+        hiddenCityInput.setAttribute('id', 'form_city_id');
+        hiddenCityInput.setAttribute('name', 'city');
+        hiddenCityInput.setAttribute('value', '');
+        form.appendChild(hiddenCityInput);
+
+        var hiddenStateInput = document.createElement('input');
+        hiddenStateInput.setAttribute('type', 'hidden');
+        hiddenStateInput.setAttribute('id', 'form_state_id');
+        hiddenStateInput.setAttribute('name', 'state');
+        hiddenStateInput.setAttribute('value', '');
+        form.appendChild(hiddenStateInput);
+
+        var hiddenZipcodeInput = document.createElement('input');
+        hiddenZipcodeInput.setAttribute('type', 'hidden');
+        hiddenZipcodeInput.setAttribute('id', 'form_zipcode_id');
+        hiddenZipcodeInput.setAttribute('name', 'zipcode');
+        hiddenZipcodeInput.setAttribute('value', '');
+        form.appendChild(hiddenZipcodeInput);
+
+        var hiddenCountryInput = document.createElement('input');
+        hiddenCountryInput.setAttribute('type', 'hidden');
+        hiddenCountryInput.setAttribute('id', 'form_country_id');
+        hiddenCountryInput.setAttribute('name', 'country');
+        hiddenCountryInput.setAttribute('value', '');
+        form.appendChild(hiddenCountryInput);
 
         // if user does not require shipping 
         if (shipping != 'False') {
-            shippingInfo.address = form.address.value
-            shippingInfo.city = form.city.value
-            shippingInfo.state = form.state.value
-            shippingInfo.zipcode = form.zipcode.value
+            document.getElementById('form_address_id').value = infoform.address.value
+            document.getElementById('form_city_id').value = infoform.city.value
+            document.getElementById('form_state_id').value = infoform.state.value
+            document.getElementById('form_zipcode_id').value = infoform.zipcode.value
+            document.getElementById('form_country_id').value = infoform.country.value
         }
 
         // if user is logged in, get name and email in addition to total
         if (user == 'AnonymousUser') {
-            userFormData.name = form.name.value
-            userFormData.email = form.email.value
+            document.getElementById('form_name_id').value = infoform.name.value
+            document.getElementById('form_email_id').value = infoform.email.value
         }
 
-        // output in the console
-        console.log('Shipping Info:', shippingInfo)
-        console.log('User Info:', userFormData)
+        /////////////Anyi end //////////////
 
-        // pass url, POST, headers and body
-        // stringify the json body and send it to backend
-        var url = "/process_order/"
-        fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'applicaiton/json',
-                'X-CSRFToken': csrftoken,
-            },
-            body: JSON.stringify({ 'form': userFormData, 'shipping': shippingInfo }),
-
-        })
-            .then((response) => response.json())// return response 
-            .then((data) => {// acknowledgement that request is successful
-                console.log('Success:', data);
-                alert('Transaction completed');
-
-                // reset cokies to empty dic in root domain
-                // regardles of wheather user is logged in or not
-                cart = {}
-
-                document.cookie = 'cart=' + JSON.stringify(cart) + ";domain=;path=/"
-
-                window.location.href = "{% url 'store' %}"
-
-            })
+        // Submit the form
+        form.submit();
     }
 </script>
+
 {% endblock content %}

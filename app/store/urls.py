@@ -10,6 +10,6 @@ urlpatterns = [
     path('checkout/', views.checkout, name="checkout"),
     # http:/localhost/update_item/
     path('update_item/', views.updateItem, name="update_item"),
-    # http:/localhost/update_item/
-    path('process_order/', views.processOrder, name="process_order"),
+    # http:/localhost/charge/
+    path('charge/', views.charge, name="charge"),
 ]

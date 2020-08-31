@@ -29,7 +29,7 @@ DEBUG = bool(int(os.environ.get('DEBUG', 0)))
 ALLOWED_HOSTS = []
 ALLOWED_HOSTS.extend(
     filter(
-        None, 
+        None,
         os.environ.get('ALLOWED_HOSTS', '').split(',')
     )
 )
@@ -147,3 +147,7 @@ STATICFILES_DIRS = [
 
 STATIC_ROOT = '/vol/web/static'
 MEDIA_ROOT = '/vol/web/media'
+
+
+STRIPE_PUBLIC_KEY = 'pk_test_51HLOu5I2e8LumXFjvDndcwXS2PDlOPDZswcOI0amkpWjvcePElV2XfgkRCiqWapICu7DSOAC7PJiEGa9x9if66dq00s8P81bYU'
+STRIPE_PRIVATE_KEY = 'sk_test_51HLOu5I2e8LumXFjr7DA2nHp0dmv88OrWuQPFYBnFnBvForUpGFUEDZwa2xTCw4vBV4yiPpNSNxPS3HcRSIzawOU00uAIVIIp0'

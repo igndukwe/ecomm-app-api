@@ -12,7 +12,7 @@ def cookieCart(request):
         # set cart to an empty dict
         # if it is the first time to the page
         cart = {}
-        print('CART:', cart)
+        print('cart:', cart)
 
     items = []
     order = {'get_cart_total': 0, 'get_cart_items': 0, 'shipping': False}
@@ -109,8 +109,8 @@ def guestOrder(request, data):
     # body: JSON.stringify({ 'form': userFormData, ...})
     # javaScript code in the checkout.html
     # and 'total' is a value of the 'form' fied
-    name = data['form']['name']
-    email = data['form']['email']
+    name = data['name']
+    email = data['email']
 
     # invoke the mtd that fetches data from cookies
     # rather than the database for the guest uses
@@ -152,7 +152,8 @@ def guestOrder(request, data):
 
         # attach product and order to order item
         # also put the quantity
-        orderItem = OrderItem.objects.create(
+        # orderItem = OrderItem.objects.create(
+        OrderItem.objects.create(
             product=product,
             order=order,
             quantity=item['quantity'],
